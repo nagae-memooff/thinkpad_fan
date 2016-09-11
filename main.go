@@ -22,9 +22,10 @@ var (
 	Log            log.Logger
 	LogLevel       log.Level
 	version        = "nagamemofan v0.0.1"
-	contro_mode    = AUTO
+	contro_mode    = read_mode()
 	monit_interval time.Duration
 	sensors        = make(map[string]string)
+	n              int
 )
 
 func init() {
@@ -58,11 +59,14 @@ func init() {
 func main() {
 	// 最简单的逻辑： 如果温度大于75度，且mode=自动，则风扇全开;
 	// 如果温度小于65度且mode=全开，则恢复自动控制
+	Log.Info("启动风扇。")
 	for {
 		now_temp := read_temp()
-		Log.Info("现在温度： %d °C", now_temp/1000)
+		contro_mode = read_mode()
 
-		if now_temp > 75000 && contro_mode == AUTO {
+		Log.Info("当前温度： %d °C, 当前模式： %s", now_temp, mode_string())
+
+		if now_temp > 75 && contro_mode == AUTO {
 			Log.Info("温度高于临界，全转速。")
 			contro_mode = FULL_SPEED
 			_, err := set_mode(FULL_SPEED)
@@ -70,14 +74,20 @@ func main() {
 				Log.Error("修改模式出错：%s", err.Error())
 
 			}
-		} else if now_temp < 65000 && contro_mode == FULL_SPEED {
-			Log.Info("温度低于临界，自动控制转速。")
-			contro_mode = AUTO
-			_, err := set_mode(AUTO)
-			if err != nil {
-				Log.Error("修改模式出错：%s", err.Error())
+		} else if now_temp < 65 && contro_mode == FULL_SPEED {
+			n++
+			Log.Info("温度低于临界值 %d 次，继续观察。", n)
+			if n > 4 {
+				Log.Info("温度连续低于临界值 %d 次，自动控制转速。", n)
+				contro_mode = AUTO
+				_, err := set_mode(AUTO)
+				if err != nil {
+					Log.Error("修改模式出错：%s", err.Error())
 
+				}
 			}
+		} else {
+			n = 0
 		}
 		time.Sleep(monit_interval)
 	}
@@ -87,8 +97,28 @@ func main() {
 // 风扇转速等级： 0～255
 // 温度： 25 ～ 75
 
-func read_mode() string {
-	return read_file(config.Get("mode_controller"))
+func read_mode() (mode int) {
+	mode, err := strconv.Atoi(read_file(config.Get("mode_controller"), 1))
+	if err != nil {
+		Log.Error("读取当前控制模式失败： %s", err.Error())
+		return AUTO
+	}
+	return
+}
+
+func mode_string() (mode string) {
+	switch contro_mode {
+	case 0:
+		mode = "全速"
+	case 1:
+		mode = "手动"
+	case 2:
+		mode = "自动"
+	default:
+		mode = "未知"
+	}
+
+	return
 }
 
 func set_mode(mode int) (n int, err error) {
@@ -102,11 +132,13 @@ func set_mode(mode int) (n int, err error) {
 
 func read_temp() (temp int) {
 	for _, sensor := range sensors {
-		this_temp, err := strconv.Atoi(read_file(sensor))
+		this_temp, err := strconv.Atoi(read_file(sensor, 5))
 		if err != nil {
-			Log.Error("读取温度信息失败！ 传感器路径： %s, 值: %s, err: %s", sensor, read_file(sensor), err.Error())
+			Log.Error("读取温度信息失败！ 传感器路径： %s, 值: %s, err: %s", sensor, read_file(sensor, 5), err.Error())
 			continue
 		}
+
+		this_temp /= 1000
 		if this_temp > temp {
 			temp = this_temp
 		}
@@ -123,7 +155,7 @@ func set_speed(speed int) {
 	//TODO
 }
 
-func read_file(filename string) (out string) {
+func read_file(filename string, n int) (out string) {
 
 	_, err := os.Stat(filename)
 	if err != nil {
@@ -136,7 +168,7 @@ func read_file(filename string) (out string) {
 		return
 	}
 
-	buff := make([]byte, 5)
+	buff := make([]byte, n)
 	f.Read(buff)
 
 	return string(buff)
