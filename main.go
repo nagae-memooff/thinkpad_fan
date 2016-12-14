@@ -221,7 +221,7 @@ func handleConn(conn net.Conn) {
 
 	switch cmd {
 	case "lock":
-		sysexec("DISPLAY=:0 gnome-screensaver-command -l")
+		sysexec("DISPLAY=:0 gnome-screensaver-command -al")
 		Log.Info("收到指令: lock")
 	case "unlock":
 		sysexec("DISPLAY=:0 gnome-screensaver-command --exit")
