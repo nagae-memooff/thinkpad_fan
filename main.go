@@ -85,7 +85,7 @@ func main() {
 		conn.Write(cmd)
 		conn.Close()
 
-		sysexec("su - nagae-memooff -c 'DISPLAY=:0 gnome-screensaver-command -al'")
+		sysexec("DISPLAY=:0 gnome-screensaver-command -al")
 		return
 	}
 
