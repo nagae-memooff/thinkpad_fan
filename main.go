@@ -82,9 +82,10 @@ func main() {
 			fmt.Printf("连接服务端失败: %s", err.Error())
 			return
 		}
-		defer conn.Close()
 		conn.Write(cmd)
+		conn.Close()
 
+		sysexec("su - nagae-memooff -c 'DISPLAY=:0 gnome-screensaver-command -al'")
 		return
 	}
 
