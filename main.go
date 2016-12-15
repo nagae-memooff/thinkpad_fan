@@ -85,7 +85,9 @@ func main() {
 		conn.Write(cmd)
 		conn.Close()
 
-		sysexec("DISPLAY=:0 gnome-screensaver-command -al")
+		if args[2] == "lock" {
+			sysexec("DISPLAY=:0 gnome-screensaver-command -al")
+		}
 		return
 	}
 
