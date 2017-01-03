@@ -77,13 +77,13 @@ func main() {
 			remote_addr = "192.168.1.11:8899"
 		}
 
-		conn, err := net.Dial("tcp", remote_addr)
-		if err != nil {
+		conn, err := net.DialTimeout("tcp", remote_addr, time.Second)
+		if err == nil {
+			conn.Write(cmd)
+			conn.Close()
+		} else {
 			fmt.Printf("连接服务端失败: %s", err.Error())
-			return
 		}
-		conn.Write(cmd)
-		conn.Close()
 
 		if args[2] == "lock" {
 			sysexec("DISPLAY=:0 gnome-screensaver-command -al")
