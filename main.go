@@ -105,7 +105,7 @@ func main() {
 
 		Log.Info("当前温度： %d °C, 当前模式： %s", now_temp, mode_string())
 
-		if now_temp > 75 && contro_mode == AUTO {
+		if now_temp > 80 && contro_mode != FULL_SPEED {
 			Log.Info("温度高于临界，全转速。")
 			contro_mode = FULL_SPEED
 			_, err := set_mode(FULL_SPEED)
