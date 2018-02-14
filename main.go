@@ -100,6 +100,7 @@ func main() {
 	go listenAndServe()
 
 	for {
+		set_cooldown_speed()
 		now_temp := read_temp()
 		contro_mode = read_mode()
 
