@@ -105,24 +105,21 @@ func main() {
 
 		Log.Info("当前温度： %d °C, 当前模式： %s", now_temp, mode_string())
 
-		if now_temp > 80 && contro_mode != FULL_SPEED {
+		if now_temp > config.GetInt("overheat_temperature") && contro_mode != FULL_SPEED {
 			Log.Info("温度高于临界，全转速。")
-			contro_mode = FULL_SPEED
 			_, err := set_mode(FULL_SPEED)
 			if err != nil {
 				Log.Error("修改模式出错：%s", err.Error())
 
 			}
-		} else if now_temp < 65 && contro_mode == FULL_SPEED {
+		} else if now_temp < config.GetInt("cooldown_temperature") && contro_mode == FULL_SPEED {
 			n++
 			Log.Info("温度低于临界值 %d 次，继续观察。", n)
 			if n > 4 {
 				Log.Info("温度连续低于临界值 %d 次，自动控制转速。", n)
-				contro_mode = AUTO
-				_, err := set_mode(AUTO)
+				err := set_cooldown_speed()
 				if err != nil {
-					Log.Error("修改模式出错：%s", err.Error())
-
+					Log.Error("设置速度出错：%s", err.Error())
 				}
 			}
 		} else {
@@ -190,8 +187,11 @@ func read_speed() (speed int) {
 	return
 }
 
-func set_speed(speed int) {
-	//TODO
+func set_cooldown_speed() (err error) {
+	command := []byte(fmt.Sprintf("level %s", config.Get("cooldown_speed")))
+	filename := config.Get("speed_controller")
+	err = ioutil.WriteFile(filename, command, os.ModeCharDevice)
+	return
 }
 
 func read_file(filename string, n int) (out string) {
