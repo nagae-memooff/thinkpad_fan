@@ -226,10 +226,16 @@ func handleConn(conn net.Conn) {
 	switch cmd {
 	case "lock":
 		sysexec("su - nagae-memooff -c 'DISPLAY=:0 gnome-screensaver-command -al'")
-		Log.Info("收到指令: lock")
+		Log.Info("收到指令: %s", cmd)
 	case "unlock":
 		sysexec("su - nagae-memooff -c 'DISPLAY=:0 gnome-screensaver-command --exit'")
-		Log.Info("收到指令: unlock")
+		Log.Info("收到指令: %s", cmd)
+		//   case "move_to_right":
+		//     sysexec("su - nagae-memooff -c 'export DISPLAY=:0; xdotool mousemove 4800 500; xdotool mousemove_relative 10 0; xdotool mousemove_relative 683 384'")
+		//     Log.Info("收到指令: %s", cmd)
+	case "move_to_left":
+		sysexec("su - nagae-memooff -c 'export DISPLAY=:0; xdotool mousemove 0 500; xdotool mousemove 960 540'")
+		Log.Info("收到指令: %s", cmd)
 	default:
 		Log.Error("不支持的指令： %s ", cmd)
 		return
